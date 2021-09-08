@@ -147,8 +147,8 @@ fn main() {
         let program;
         unsafe {
             program = shader::ShaderBuilder::new()
-            .attach_file("../shaders/simple.vert")
-            .attach_file("../shaders/simple.frag")
+            .attach_file("shaders/simple.vert")
+            .attach_file("shaders/simple.frag")
             .link();
             program.activate();
         }
