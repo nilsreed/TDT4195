@@ -1,0 +1,5 @@
+/target
+/.vscode
+/report/*.pdf
+/report/*.html
+source.zip
