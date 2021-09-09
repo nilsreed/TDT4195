@@ -4,5 +4,10 @@ in vec3 position;
 
 void main()
 {
-    gl_Position = vec4(position, 1.0f);
+    mat3x3 flipper_matrix = mat3(-1.0, 0, 0,
+                                 0, -1.0, 0,
+                                 0, 0, 1.0);
+
+    vec3 new_pos = flipper_matrix*position;
+    gl_Position = vec4(new_pos, 1.0f);
 }
