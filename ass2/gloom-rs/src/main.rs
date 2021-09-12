@@ -39,7 +39,7 @@ fn offset<T>(n: u32) -> *const c_void {
 
 
 // == // Modify and complete the function below for the first task
-unsafe fn set_up_VAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     let mut array_ID: u32 = 0;
     let number_of_VAOs = 1;
 
@@ -48,11 +48,11 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
     gl::BindVertexArray(array_ID);
 
     /* Vertex Buffer Object for vertices */
-    let mut buffer_ID: u32 = 0;
+    let mut vertex_buffer_ID: u32 = 0;
     let number_of_VBOs = 1;
 
-    gl::GenBuffers(number_of_VBOs, &mut buffer_ID as *mut u32);
-    gl::BindBuffer(gl::ARRAY_BUFFER, buffer_ID);
+    gl::GenBuffers(number_of_VBOs, &mut vertex_buffer_ID as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, vertex_buffer_ID);
 
     gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(vertices), pointer_to_array(vertices), gl::STATIC_DRAW);
 
@@ -64,6 +64,24 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, indices: &Vec<u32>) -> u32 {
                             gl::FLOAT, gl::FALSE, stride, first_data);
 
     gl::EnableVertexAttribArray(vertex_attrib_ptr_idx);
+
+    /* Vertex Buffer Object for colours */
+
+    let mut colour_buffer_ID: u32 = 0;
+    let number_of_CVBOs = 1;
+
+    gl::GenBuffers(number_of_CVBOs, &mut colour_buffer_ID as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, colour_buffer_ID);
+
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(colour), pointer_to_array(colour), gl::STATIC_DRAW);
+
+    let colour_attrib_ptr_idx = 1;
+    let components_per_colour = 4;
+
+    gl::VertexAttribPointer(colour_attrib_ptr_idx, components_per_colour,
+                            gl::FLOAT, gl::FALSE, stride, first_data);
+    
+    gl::EnableVertexAttribArray(colour_attrib_ptr_idx);
 
     /* Vertex Buffer Object for indices */
     let mut idx_buffer_ID: u32 = 0;
@@ -130,29 +148,13 @@ fn main() {
 
         // == // Set up your VAO here
         let vao_num;
-
-        /* Vertices used for 1c:  */
-        /*let vertices: Vec<f32> = vec![-0.75, 0.75, 0.0, -0.5, 0.75, 0.0, -0.625, 1.0, 0.0,
-                                      -0.25, 0.75, 0.0, -0.0, 0.75, 0.0, -0.125, 1.0, 0.0,
-                                      -0.5, 0.5, 0.0, -0.375, 0.25, 0.0, -0.25, 0.5, 0.0,
-                                      -0.5, 0.0, 0.0, -0.375, -0.25, 0.0, -0.25, 0.0, 0.0,
-                                      -0.75, 0.0, 0.0, -0.625, -0.25, 0.0, -0.5, 0.0, 0.0,
-                                      -0.875, 0.25, 0.0, -0.75, 0.0, 0.0, -0.625, 0.25, 0.0,
-                                      -0.25, 0.0, 0.0, -0.125, -0.25, 0.0, -0.0, 0.0, 0.0,
-                                      -0.125, 0.25, 0.0, 0.0, 0.0, 0.0, 0.125, 0.25, 0.0,];*/
         
         let vertices: Vec<f32> = vec![-0.6, -0.6, 0.0, 0.6, -0.3, 0.0, 0.0, 0.6, 0.0];
-        /*let triangles = 1;
-        let mut indices: Vec<u32> = Vec::new();
-        for n in 0..triangles {
-            indices.push(3*n);
-            indices.push(3*n+1);
-            indices.push(3*n+2);
-        }*/
         let indices: Vec<u32> = vec![0,1,2];
+        let colours: Vec<f32> = vec![0.0, 0.0, 1.0, 1.0];
 
         unsafe {
-            vao_num = set_up_VAO(&vertices, &indices);
+            vao_num = set_up_VAO(&vertices, &colours, &indices);
         }
 
         // Basic usage of shader helper:
