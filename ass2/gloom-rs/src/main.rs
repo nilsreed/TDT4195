@@ -250,13 +250,13 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
-                let basic_translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
+                let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
                 let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
                 let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));
 
                 let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 100.0);
 
-                let transformation = perspective_mat*rot_2*rot_1*basic_translation_mat;
+                let transformation = perspective_mat*rot_2*rot_1*translation_mat;
 
                 gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
 
