@@ -149,13 +149,15 @@ fn main() {
         // == // Set up your VAO here
         let vao_num;
         
-        let vertices: Vec<f32> = vec![-0.6, -0.2, 0.4, 0.2, 0.0, 0.4, -0.6, 0.2, 0.4,
-                                      -0.2, 0.0, 0.2, 0.6, -0.2, 0.2, 0.6, 0.2, 0.2,
-                                       0.0, -0.2, 0.0, 0.2, 0.6, 0.0, -0.2, 0.6, 0.0];
+        let vertices: Vec<f32> = vec![-0.6, -0.2, -1.4, 0.2, 0.0, -1.4, -0.6, 0.2, -1.4,
+                                      -0.2, 0.0, -1.2, 0.6, -0.2, -1.2, 0.6, 0.2, -1.2,
+                                       0.0, -0.2, -1.0, 0.2, 0.6, -1.0, -0.2, 0.6, -1.0];
+
         let indices: Vec<u32> = vec![0,1,2,3,4,5,6,7,8];
-        let colours: Vec<f32> = vec![0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5,
-                                     0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5,
-                                     1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5];
+
+        let colours: Vec<f32> = vec![1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5,
+                                     0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5,
+                                     0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5];
 
         unsafe {
             vao_num = set_up_VAO(&vertices, &colours, &indices);
@@ -177,6 +179,9 @@ fn main() {
             .link();
             program.activate();
         }
+
+        let mut angles: Vec<f32> = vec![0.0, 0.0, 0.0]; //We should only rotate about x and y axes, but as a byproduct this will cause rotation about z. 
+        let mut position: Vec<f32> = vec![0.0, 0.0, 0.0];
         
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -195,12 +200,37 @@ fn main() {
             if let Ok(keys) = pressed_keys.lock() {
                 for key in keys.iter() {
                     match key {
+                        VirtualKeyCode::Space => {
+                            position[1] += delta_time*2.0;
+                        },
                         VirtualKeyCode::A => {
-                            _arbitrary_number += delta_time;
+                            position[0] -= delta_time*2.0;
+                        },
+                        VirtualKeyCode::LShift => {
+                            position[1] -= delta_time*2.0;
                         },
                         VirtualKeyCode::D => {
-                            _arbitrary_number -= delta_time;
+                            position[0] += delta_time*2.0;
                         },
+                        VirtualKeyCode::S => {
+                            position[2] += delta_time*2.0;
+                        },
+                        VirtualKeyCode::W => {
+                            position[2] -= delta_time*2.0;
+                        },
+                        VirtualKeyCode::Up => {
+                            angles[0] += delta_time*0.5;
+                        },
+                        VirtualKeyCode::Down => {
+                            angles[0] -= delta_time*0.5;
+                        },
+                        VirtualKeyCode::Left => {
+                            angles[1] += delta_time*0.5;
+                        },
+                        VirtualKeyCode::Right => {
+                            angles[1] -= delta_time*0.5;
+                        },
+                        
 
 
                         _ => { }
@@ -220,6 +250,17 @@ fn main() {
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
+                let basic_translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
+                let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
+                let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));
+
+                let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 100.0);
+
+                let transformation = perspective_mat*rot_2*rot_1*basic_translation_mat;
+
+                gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
+
+
                 let elements_to_draw: i32 = indices.len() as i32;
                 let zero_address = ptr::null();
                 gl::BindVertexArray(vao_num);
