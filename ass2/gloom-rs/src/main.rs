@@ -180,7 +180,7 @@ fn main() {
             program.activate();
         }
 
-        let mut angles: Vec<f32> = vec![0.0, 0.0, 0.0]; //We should only rotate about x and y axes, but as a byproduct this will cause rotation about z. 
+        let mut angles: Vec<f32> = vec![0.0, 0.0];
         let mut position: Vec<f32> = vec![0.0, 0.0, 0.0];
         
 
