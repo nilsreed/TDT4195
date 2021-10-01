@@ -36,6 +36,7 @@ impl Terrain {
             = tobj::load_obj(path,
                 &tobj::LoadOptions{
                     triangulate: true,
+                    single_index: true,
                     ..Default::default()
                 }
             ).expect("Failed to load terrain model");
@@ -90,6 +91,7 @@ impl Helicopter {
             = tobj::load_obj(path,
                 &tobj::LoadOptions{
                     triangulate: true,
+                    single_index: true,
                     ..Default::default()
                 }
             ).expect("Failed to load helicopter model");

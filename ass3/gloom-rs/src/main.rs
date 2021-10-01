@@ -5,6 +5,7 @@ use std::sync::{Mutex, Arc, RwLock};
 
 mod shader;
 mod util;
+mod mesh;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -39,7 +40,7 @@ fn offset<T>(n: u32) -> *const c_void {
 
 
 // == // Modify and complete the function below for the first task
-unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>) -> u32 {
+unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>, normals: &Vec<f32>) -> u32 {
     let mut array_ID: u32 = 0;
     let number_of_VAOs = 1;
 
@@ -82,6 +83,24 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>)
                             gl::FLOAT, gl::FALSE, stride, first_data);
     
     gl::EnableVertexAttribArray(colour_attrib_ptr_idx);
+
+    /* Vertex Buffer Object for normals */
+
+    let mut normal_buffer_ID: u32 = 0;
+    let number_of_NVBOs = 1;
+
+    gl::GenBuffers(number_of_NVBOs, &mut normal_buffer_ID as *mut u32);
+    gl::BindBuffer(gl::ARRAY_BUFFER, normal_buffer_ID);
+
+    gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(normals), pointer_to_array(normals), gl::STATIC_DRAW);
+
+    let normal_attrib_ptr_idx = 2;
+    let components_per_normal = 3;
+
+    gl::VertexAttribPointer(normal_attrib_ptr_idx, components_per_normal,
+                            gl::FLOAT, gl::FALSE, stride, first_data);
+    
+    gl::EnableVertexAttribArray(normal_attrib_ptr_idx);
 
     /* Vertex Buffer Object for indices */
     let mut idx_buffer_ID: u32 = 0;
@@ -149,18 +168,12 @@ fn main() {
         // == // Set up your VAO here
         let vao_num;
         
-        let vertices: Vec<f32> = vec![-0.6, -0.2, -1.4, 0.2, 0.0, -1.4, -0.6, 0.2, -1.4,
-                                      -0.2, 0.0, -1.2, 0.6, -0.2, -1.2, 0.6, 0.2, -1.2,
-                                       0.0, -0.2, -1.0, 0.2, 0.6, -1.0, -0.2, 0.6, -1.0];
-
-        let indices: Vec<u32> = vec![0,1,2,3,4,5,6,7,8];
-
-        let colours: Vec<f32> = vec![1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.5,
-                                     0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5, 0.0, 0.0, 1.0, 0.5,
-                                     0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.5];
+        let terrain_path = "resources/lunarsurface.obj";
+        let surface: mesh::Mesh;
+        surface = mesh::Terrain::load(&terrain_path);
 
         unsafe {
-            vao_num = set_up_VAO(&vertices, &colours, &indices);
+            vao_num = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);
         }
 
         // Basic usage of shader helper:
@@ -201,22 +214,22 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::Space => {
-                            position[1] += delta_time*2.0;
+                            position[1] += delta_time*40.0;
                         },
                         VirtualKeyCode::A => {
-                            position[0] -= delta_time*2.0;
+                            position[0] -= delta_time*40.0;
                         },
                         VirtualKeyCode::LShift => {
-                            position[1] -= delta_time*2.0;
+                            position[1] -= delta_time*40.0;
                         },
                         VirtualKeyCode::D => {
-                            position[0] += delta_time*2.0;
+                            position[0] += delta_time*40.0;
                         },
                         VirtualKeyCode::S => {
-                            position[2] += delta_time*2.0;
+                            position[2] += delta_time*40.0;
                         },
                         VirtualKeyCode::W => {
-                            position[2] -= delta_time*2.0;
+                            position[2] -= delta_time*40.0;
                         },
                         VirtualKeyCode::Up => {
                             angles[0] += delta_time*0.5;
@@ -254,18 +267,16 @@ fn main() {
                 let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
                 let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));
 
-                let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 100.0);
+                let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 1000.0);
 
                 let transformation = perspective_mat*rot_2*rot_1*translation_mat;
 
                 gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
 
-
-                let elements_to_draw: i32 = indices.len() as i32;
                 let zero_address = ptr::null();
                 gl::BindVertexArray(vao_num);
                 
-                gl::DrawElements(gl::TRIANGLES, elements_to_draw, gl::UNSIGNED_INT, zero_address);
+                gl::DrawElements(gl::TRIANGLES, surface.index_count, gl::UNSIGNED_INT, zero_address);
 
             }
 
