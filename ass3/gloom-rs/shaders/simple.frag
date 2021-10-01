@@ -6,5 +6,6 @@ out vec4 color;
 
 void main()
 {
-    color = vec4(normal_out.x, normal_out.y, normal_out.z, colour_out.a);
+    vec3 lightDirection = normalize(vec3(0.8, -0.5, 0.6));
+    color = colour_out*max(0, dot(normal_out, -lightDirection));
 }

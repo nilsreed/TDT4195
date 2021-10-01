@@ -169,8 +169,10 @@ fn main() {
         let vao_num;
         
         let terrain_path = "resources/lunarsurface.obj";
-        let surface: mesh::Mesh;
-        surface = mesh::Terrain::load(&terrain_path);
+        let surface: mesh::Mesh = mesh::Terrain::load(&terrain_path);
+
+        let helicopter_path = "resources/helicopter.obj";
+        let helicopter: mesh::Helicopter = mesh::Helicopter::load(&helicopter_path);
 
         unsafe {
             vao_num = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);
@@ -259,7 +261,8 @@ fn main() {
             }
 
             unsafe {
-                gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
+                //gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
+                gl::ClearColor(0.0, 0.0, 0.0, 1.0); // moon raker, full opacity
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
