@@ -96,7 +96,7 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>,
 
     gl::BufferData(gl::ARRAY_BUFFER, byte_size_of_array(normals), pointer_to_array(normals), gl::STATIC_DRAW);
 
-    let normal_attrib_ptr_idx = 2;
+    let normal_attrib_ptr_idx = 3;
     let components_per_normal = 3;
 
     gl::VertexAttribPointer(normal_attrib_ptr_idx, components_per_normal,
@@ -114,7 +114,36 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>,
     gl::BufferData(gl::ELEMENT_ARRAY_BUFFER, byte_size_of_array(indices), pointer_to_array(indices), gl::STATIC_DRAW);
 
     return array_ID;
-} 
+}
+
+unsafe fn draw_scene(node: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
+    if(node.index_count >= 0){
+        gl::UniformMatrix4fv(2, 1, 0, view_projection_matrix.as_ptr());
+        gl::BindVertexArray(node.vao_id);
+        gl::DrawElements(gl::TRIANGLES, node.index_count, gl::UNSIGNED_INT, ptr::null());
+    }
+    
+    for &child in &node.children{
+        draw_scene(&*child, view_projection_matrix);
+    }
+}
+
+unsafe fn update_node_transformations(node: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4){
+    //Construct correct transformation matrix
+    trans = transformation_so_far;
+    trans = glm::translation(&glm::vec3(node.position.x, node.position.y, node.position.z))*trans;
+    //Add rotations
+
+    /*let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
+    let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
+    let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));*/
+    //update the node's transformation matrix
+    node.current_transformation_matrix = ;
+
+    for &child in &node.children{
+        update_node_transformations(&mut *child, &node.current_transformation_matrix);
+    }
+}
 
 fn main() {
     // Set up the necessary objects to deal with windows and event handling
@@ -186,14 +215,18 @@ fn main() {
         }
 
         /* Create scene nodes and combine them into a scene graph */
-        unsafe {
-            let mut root = SceneNode::new();
-            let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
-            let mut body_node = SceneNode::from_vao(body_vao, helicopter.body.index_count);
-            let mut door_node = SceneNode::from_vao(door_vao, helicopter.door.index_count);
-            let mut main_rotor_node = SceneNode::from_vao(main_rotor_vao, helicopter.main_rotor.index_count);
-            let mut tail_rotor_node = SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count);
+        let mut root = SceneNode::new();
+        let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
+        let mut body_node = SceneNode::from_vao(body_vao, helicopter.body.index_count);
+        let mut door_node = SceneNode::from_vao(door_vao, helicopter.door.index_count);
+        let mut main_rotor_node = SceneNode::from_vao(main_rotor_vao, helicopter.main_rotor.index_count);
+        let mut tail_rotor_node = SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count);
 
+        tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
+        main_rotor_node.reference_point = glm::vec3(0.0, 0.0, 0.0); //???
+        
+
+        unsafe {
             root.add_child(&terrain_node);
             terrain_node.add_child(&body_node);
             body_node.add_child(&door_node);
@@ -295,9 +328,11 @@ fn main() {
 
                 let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 1000.0);
 
-                let transformation = perspective_mat*rot_2*rot_1*translation_mat;
+                let transformation = perspective_mat;//*rot_2*rot_1*translation_mat;
 
-                gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
+                draw_scene(&root, &transformation);
+
+                /*gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
 
                 let zero_address = ptr::null();
                 gl::BindVertexArray(terrain_vao);
@@ -318,7 +353,7 @@ fn main() {
 
                 gl::BindVertexArray(tail_rotor_vao);
                 
-                gl::DrawElements(gl::TRIANGLES, helicopter.tail_rotor.index_count, gl::UNSIGNED_INT, zero_address);
+                gl::DrawElements(gl::TRIANGLES, helicopter.tail_rotor.index_count, gl::UNSIGNED_INT, zero_address);*/
 
             }
 

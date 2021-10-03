@@ -1,7 +1,7 @@
 #version 430 core
 
 in layout(location=1) vec4 colour_out;
-in layout(location=2) vec3 normal_out;
+in layout(location=3) vec3 normal_out;
 out vec4 color;
 
 void main()
