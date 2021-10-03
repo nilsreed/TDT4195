@@ -6,6 +6,8 @@ use std::sync::{Mutex, Arc, RwLock};
 mod shader;
 mod util;
 mod mesh;
+mod scene_graph;
+use scene_graph::SceneNode;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -166,16 +168,37 @@ fn main() {
         }
 
         // == // Set up your VAO here
-        let vao_num;
+        let (terrain_vao, body_vao, door_vao, main_rotor_vao, tail_rotor_vao);
         
         let terrain_path = "resources/lunarsurface.obj";
-        let surface: mesh::Mesh = mesh::Terrain::load(&terrain_path);
+        let surface = mesh::Terrain::load(&terrain_path);
 
         let helicopter_path = "resources/helicopter.obj";
-        let helicopter: mesh::Helicopter = mesh::Helicopter::load(&helicopter_path);
+        let helicopter = mesh::Helicopter::load(&helicopter_path);
 
+        /* Set up VAOS */
         unsafe {
-            vao_num = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);
+            terrain_vao = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);
+            body_vao = set_up_VAO(&helicopter.body.vertices, &helicopter.body.colors, &helicopter.body.indices, &helicopter.body.normals);
+            door_vao = set_up_VAO(&helicopter.door.vertices, &helicopter.door.colors, &helicopter.door.indices, &helicopter.door.normals);
+            main_rotor_vao = set_up_VAO(&helicopter.main_rotor.vertices, &helicopter.main_rotor.colors, &helicopter.main_rotor.indices, &helicopter.main_rotor.normals);
+            tail_rotor_vao = set_up_VAO(&helicopter.tail_rotor.vertices, &helicopter.tail_rotor.colors, &helicopter.tail_rotor.indices, &helicopter.tail_rotor.normals);
+        }
+
+        /* Create scene nodes and combine them into a scene graph */
+        unsafe {
+            let mut root = SceneNode::new();
+            let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
+            let mut body_node = SceneNode::from_vao(body_vao, helicopter.body.index_count);
+            let mut door_node = SceneNode::from_vao(door_vao, helicopter.door.index_count);
+            let mut main_rotor_node = SceneNode::from_vao(main_rotor_vao, helicopter.main_rotor.index_count);
+            let mut tail_rotor_node = SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count);
+
+            root.add_child(&terrain_node);
+            terrain_node.add_child(&body_node);
+            body_node.add_child(&door_node);
+            body_node.add_child(&main_rotor_node);
+            body_node.add_child(&tail_rotor_node);
         }
 
         // Basic usage of shader helper:
@@ -277,9 +300,25 @@ fn main() {
                 gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
 
                 let zero_address = ptr::null();
-                gl::BindVertexArray(vao_num);
+                gl::BindVertexArray(terrain_vao);
                 
                 gl::DrawElements(gl::TRIANGLES, surface.index_count, gl::UNSIGNED_INT, zero_address);
+
+                gl::BindVertexArray(body_vao);
+                
+                gl::DrawElements(gl::TRIANGLES, helicopter.body.index_count, gl::UNSIGNED_INT, zero_address);
+
+                gl::BindVertexArray(door_vao);
+                
+                gl::DrawElements(gl::TRIANGLES, helicopter.door.index_count, gl::UNSIGNED_INT, zero_address);
+
+                gl::BindVertexArray(main_rotor_vao);
+                
+                gl::DrawElements(gl::TRIANGLES, helicopter.main_rotor.index_count, gl::UNSIGNED_INT, zero_address);
+
+                gl::BindVertexArray(tail_rotor_vao);
+                
+                gl::DrawElements(gl::TRIANGLES, helicopter.tail_rotor.index_count, gl::UNSIGNED_INT, zero_address);
 
             }
 
