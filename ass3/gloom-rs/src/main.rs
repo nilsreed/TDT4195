@@ -117,8 +117,8 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>,
 }
 
 unsafe fn draw_scene(node: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
-    if(node.index_count >= 0){
-        gl::UniformMatrix4fv(2, 1, 0, view_projection_matrix.as_ptr());
+    if node.index_count >= 0 {
+        gl::UniformMatrix4fv(2, 1, 0, (view_projection_matrix*node.current_transformation_matrix).as_ptr());
         gl::BindVertexArray(node.vao_id);
         gl::DrawElements(gl::TRIANGLES, node.index_count, gl::UNSIGNED_INT, ptr::null());
     }
@@ -130,15 +130,20 @@ unsafe fn draw_scene(node: &scene_graph::SceneNode, view_projection_matrix: &glm
 
 unsafe fn update_node_transformations(node: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4){
     //Construct correct transformation matrix
-    trans = transformation_so_far;
+    let mut trans = *transformation_so_far;
+    //Move to reference point
+    trans = glm::translation(&glm::vec3(-node.reference_point.x, -node.reference_point.y, -node.reference_point.z))*trans;
+    //Apply rotations
+    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0))*trans;
+    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0))*trans;
+    trans = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0))*trans;
+    //Move back from reference point
+    trans = glm::translation(&glm::vec3(node.reference_point.x, node.reference_point.y, node.reference_point.z))*trans;
+    //Apply translation
     trans = glm::translation(&glm::vec3(node.position.x, node.position.y, node.position.z))*trans;
-    //Add rotations
 
-    /*let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
-    let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
-    let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));*/
-    //update the node's transformation matrix
-    node.current_transformation_matrix = ;
+    //Update the current transformation 
+    node.current_transformation_matrix = trans;
 
     for &child in &node.children{
         update_node_transformations(&mut *child, &node.current_transformation_matrix);
@@ -224,15 +229,15 @@ fn main() {
 
         tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
         main_rotor_node.reference_point = glm::vec3(0.0, 0.0, 0.0); //???
-        
+        /* TEST */
+        body_node.position = glm::vec3(0.0, 0.0, -20.0);
+        body_node.rotation.y = 3.14;
 
-        unsafe {
-            root.add_child(&terrain_node);
-            terrain_node.add_child(&body_node);
-            body_node.add_child(&door_node);
-            body_node.add_child(&main_rotor_node);
-            body_node.add_child(&tail_rotor_node);
-        }
+        root.add_child(&terrain_node);
+        terrain_node.add_child(&body_node);
+        body_node.add_child(&door_node);
+        body_node.add_child(&main_rotor_node);
+        body_node.add_child(&tail_rotor_node);
 
         // Basic usage of shader helper:
         // The example code below returns a shader object, which contains the field `.program_id`.
@@ -318,19 +323,23 @@ fn main() {
 
             unsafe {
                 //gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
-                gl::ClearColor(0.0, 0.0, 0.0, 1.0); // moon raker, full opacity
+                //gl::ClearColor(0.0, 0.0, 0.0, 1.0); // moon raker, full opacity
+                //Temp:
+                gl::ClearColor(1.0,1.0,1.0,1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // Issue the necessary commands to draw your scene here
-                let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
+                /*let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
                 let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
                 let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));
+                (node: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4*/
+                
+                update_node_transformations(&mut root as &mut scene_graph::SceneNode, &glm::identity());
 
                 let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 1000.0);
 
-                let transformation = perspective_mat;//*rot_2*rot_1*translation_mat;
 
-                draw_scene(&root, &transformation);
+                draw_scene(&root, &perspective_mat);
 
                 /*gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
 
