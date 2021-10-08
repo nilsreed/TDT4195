@@ -274,9 +274,6 @@ fn main() {
             .link();
             program.activate();
         }
-
-        let mut angles: Vec<f32> = vec![0.0, 0.0];
-        let mut position: Vec<f32> = vec![0.0, 0.0, 0.0];
         
 
         // Used to demonstrate keyboard handling -- feel free to remove
@@ -296,34 +293,43 @@ fn main() {
                 for key in keys.iter() {
                     match key {
                         VirtualKeyCode::Space => {
-                            position[1] += delta_time*40.0;
+                            unsafe {(*root.children[0]).position[1] -= delta_time*40.0;}
                         },
                         VirtualKeyCode::A => {
-                            position[0] -= delta_time*40.0;
+                            unsafe {(*root.children[0]).position[0] += delta_time*40.0;}
+                            //position[0] -= delta_time*40.0;
                         },
                         VirtualKeyCode::LShift => {
-                            position[1] -= delta_time*40.0;
+                            unsafe {(*root.children[0]).position[1] += delta_time*40.0;}
+                            //position[1] -= delta_time*40.0;
                         },
                         VirtualKeyCode::D => {
-                            position[0] += delta_time*40.0;
+                            unsafe {(*root.children[0]).position[0] -= delta_time*40.0;}
+                            //position[0] += delta_time*40.0;
                         },
                         VirtualKeyCode::S => {
-                            position[2] += delta_time*40.0;
+                            unsafe {(*root.children[0]).position[2] -= delta_time*40.0;}
+                            //position[2] += delta_time*40.0;
                         },
                         VirtualKeyCode::W => {
-                            position[2] -= delta_time*40.0;
+                            unsafe {(*root.children[0]).position[2] += delta_time*40.0;}
+                            //position[2] -= delta_time*40.0;
                         },
                         VirtualKeyCode::Up => {
-                            angles[0] += delta_time*0.5;
+                            unsafe {(*root.children[0]).rotation[0] -= delta_time*0.5;}
+                            //angles[0] += delta_time*0.5;
                         },
                         VirtualKeyCode::Down => {
-                            angles[0] -= delta_time*0.5;
+                            unsafe {(*root.children[0]).rotation[0] += delta_time*0.5;}
+                            //angles[0] -= delta_time*0.5;
                         },
                         VirtualKeyCode::Left => {
-                            angles[1] += delta_time*0.5;
+                            unsafe {(*root.children[0]).rotation[1] -= delta_time*0.5;}
+                            //angles[1] += delta_time*0.5;
                         },
                         VirtualKeyCode::Right => {
-                            angles[1] -= delta_time*0.5;
+                            unsafe {(*root.children[0]).rotation[1] += delta_time*0.5;}
+                            //angles[1] -= delta_time*0.5;
                         },
                         
 
@@ -347,7 +353,7 @@ fn main() {
                 //gl::ClearColor(1.0,1.0,1.0,1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                let offset = 0.2;
+                let offset = 0.8;
 
                 for i in 0..=4{
                     // Issue the necessary commands to draw your scene here
@@ -358,14 +364,19 @@ fn main() {
                     //tail_rotor_node.rotation.x = 1.6*elapsed;
 
                     //Get animation for helicopter:
-                    let heading: toolbox::Heading = toolbox::simple_heading_animation(elapsed + i*offset);
+                    let heading: toolbox::Heading = toolbox::simple_heading_animation(elapsed + (i as f32)*offset);
 
-                    body_node.position.x = heading.x;
-                    body_node.position.z = heading.z;
+                    (*(*root.children[0]).children[i]).position.x = heading.x;
+                    (*(*root.children[0]).children[i]).position.z = heading.z;
+                    //body_node.position.x = heading.x;
+                    //body_node.position.z = heading.z;
 
-                    body_node.rotation.y = heading.yaw;
-                    body_node.rotation.x = heading.pitch;
-                    body_node.rotation.z = heading.roll;
+                    (*(*root.children[0]).children[i]).rotation.y = heading.yaw;
+                    (*(*root.children[0]).children[i]).rotation.x = heading.pitch;
+                    (*(*root.children[0]).children[i]).rotation.z = heading.roll;
+                    //body_node.rotation.y = heading.yaw;
+                    //body_node.rotation.x = heading.pitch;
+                    //body_node.rotation.z = heading.roll;
                 }
 
                 //Update transformations
