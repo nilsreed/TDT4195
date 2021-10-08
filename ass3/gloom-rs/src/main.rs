@@ -8,6 +8,7 @@ mod util;
 mod mesh;
 mod scene_graph;
 use scene_graph::SceneNode;
+mod toolbox;
 
 use glutin::event::{Event, WindowEvent, DeviceEvent, KeyboardInput, ElementState::{Pressed, Released}, VirtualKeyCode::{self, *}};
 use glutin::event_loop::ControlFlow;
@@ -118,7 +119,8 @@ unsafe fn set_up_VAO(vertices: &Vec<f32>, colour: &Vec<f32>, indices: &Vec<u32>,
 
 unsafe fn draw_scene(node: &scene_graph::SceneNode, view_projection_matrix: &glm::Mat4){
     if node.index_count >= 0 {
-        gl::UniformMatrix4fv(2, 1, 0, (view_projection_matrix*node.current_transformation_matrix).as_ptr());
+        gl::UniformMatrix4fv(2, 1, 0, node.current_transformation_matrix.as_ptr());
+        gl::UniformMatrix4fv(4, 1, 0, view_projection_matrix.as_ptr());
         gl::BindVertexArray(node.vao_id);
         gl::DrawElements(gl::TRIANGLES, node.index_count, gl::UNSIGNED_INT, ptr::null());
     }
@@ -129,16 +131,16 @@ unsafe fn draw_scene(node: &scene_graph::SceneNode, view_projection_matrix: &glm
 }
 
 unsafe fn update_node_transformations(node: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4){
-    //Construct correct transformation matrix
-    let mut trans = *transformation_so_far;
     //Move to reference point
-    trans = glm::translation(&glm::vec3(-node.reference_point.x, -node.reference_point.y, -node.reference_point.z))*trans;
+    let mut trans = glm::translation(&glm::vec3(-node.reference_point.x, -node.reference_point.y, -node.reference_point.z));
     //Apply rotations
-    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0))*trans;
-    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0))*trans;
     trans = glm::rotation(node.rotation.z, &glm::vec3(0.0, 0.0, 1.0))*trans;
+    trans = glm::rotation(node.rotation.y, &glm::vec3(0.0, 1.0, 0.0))*trans;
+    trans = glm::rotation(node.rotation.x, &glm::vec3(1.0, 0.0, 0.0))*trans;
     //Move back from reference point
     trans = glm::translation(&glm::vec3(node.reference_point.x, node.reference_point.y, node.reference_point.z))*trans;
+    //Apply parent transformation
+    trans = (*transformation_so_far)*trans;
     //Apply translation
     trans = glm::translation(&glm::vec3(node.position.x, node.position.y, node.position.z))*trans;
 
@@ -202,7 +204,7 @@ fn main() {
         }
 
         // == // Set up your VAO here
-        let (terrain_vao, body_vao, door_vao, main_rotor_vao, tail_rotor_vao);
+        let (mut terrain_vao, mut body_vao, mut door_vao, mut main_rotor_vao, mut tail_rotor_vao);
         
         let terrain_path = "resources/lunarsurface.obj";
         let surface = mesh::Terrain::load(&terrain_path);
@@ -210,17 +212,32 @@ fn main() {
         let helicopter_path = "resources/helicopter.obj";
         let helicopter = mesh::Helicopter::load(&helicopter_path);
 
-        /* Set up VAOS */
-        unsafe {
-            terrain_vao = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);
-            body_vao = set_up_VAO(&helicopter.body.vertices, &helicopter.body.colors, &helicopter.body.indices, &helicopter.body.normals);
-            door_vao = set_up_VAO(&helicopter.door.vertices, &helicopter.door.colors, &helicopter.door.indices, &helicopter.door.normals);
-            main_rotor_vao = set_up_VAO(&helicopter.main_rotor.vertices, &helicopter.main_rotor.colors, &helicopter.main_rotor.indices, &helicopter.main_rotor.normals);
-            tail_rotor_vao = set_up_VAO(&helicopter.tail_rotor.vertices, &helicopter.tail_rotor.colors, &helicopter.tail_rotor.indices, &helicopter.tail_rotor.normals);
+        unsafe {terrain_vao = set_up_VAO(&surface.vertices, &surface.colors, &surface.indices, &surface.normals);}
+
+        let mut root = SceneNode::new();
+        let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
+
+        root.add_child(&terrain_node);
+
+        for i in 0..=4{
+            unsafe {
+                body_vao = set_up_VAO(&helicopter.body.vertices, &helicopter.body.colors, &helicopter.body.indices, &helicopter.body.normals);
+                door_vao = set_up_VAO(&helicopter.door.vertices, &helicopter.door.colors, &helicopter.door.indices, &helicopter.door.normals);
+                main_rotor_vao = set_up_VAO(&helicopter.main_rotor.vertices, &helicopter.main_rotor.colors, &helicopter.main_rotor.indices, &helicopter.main_rotor.normals);
+                tail_rotor_vao = set_up_VAO(&helicopter.tail_rotor.vertices, &helicopter.tail_rotor.colors, &helicopter.tail_rotor.indices, &helicopter.tail_rotor.normals);
+            
+                (*root.children[0]).add_child(&SceneNode::from_vao(body_vao, helicopter.body.index_count));
+                (*(*root.children[0]).children[i]).add_child(&SceneNode::from_vao(door_vao, helicopter.door.index_count));
+                (*(*root.children[0]).children[i]).add_child(&SceneNode::from_vao(main_rotor_vao, helicopter.main_rotor.index_count));
+                (*(*root.children[0]).children[i]).add_child(&SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count));
+                (*(*(*root.children[0]).children[i]).children[1]).reference_point = glm::vec3(0.0, 0.0, 0.0);
+                (*(*(*root.children[0]).children[i]).children[2]).reference_point = glm::vec3(0.35, 2.3, 10.4);
+            }
         }
+        
 
         /* Create scene nodes and combine them into a scene graph */
-        let mut root = SceneNode::new();
+        /*let mut root = SceneNode::new();
         let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
         let mut body_node = SceneNode::from_vao(body_vao, helicopter.body.index_count);
         let mut door_node = SceneNode::from_vao(door_vao, helicopter.door.index_count);
@@ -228,16 +245,18 @@ fn main() {
         let mut tail_rotor_node = SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count);
 
         tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-        main_rotor_node.reference_point = glm::vec3(0.0, 0.0, 0.0); //???
+        main_rotor_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
         /* TEST */
-        body_node.position = glm::vec3(0.0, 0.0, -20.0);
-        body_node.rotation.y = 3.14;
+        //body_node.position = glm::vec3(0.0, 0.0, -20.0);
+        //terrain_node.position = glm::vec3(0.0, -3.0, 0.0);
+        //body_node.rotation.y = -3.14*3.0/4.0;
 
         root.add_child(&terrain_node);
         terrain_node.add_child(&body_node);
         body_node.add_child(&door_node);
         body_node.add_child(&main_rotor_node);
-        body_node.add_child(&tail_rotor_node);
+        body_node.add_child(&tail_rotor_node);*/
+
 
         // Basic usage of shader helper:
         // The example code below returns a shader object, which contains the field `.program_id`.
@@ -322,48 +341,39 @@ fn main() {
             }
 
             unsafe {
-                //gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
+                gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
                 //gl::ClearColor(0.0, 0.0, 0.0, 1.0); // moon raker, full opacity
                 //Temp:
-                gl::ClearColor(1.0,1.0,1.0,1.0);
+                //gl::ClearColor(1.0,1.0,1.0,1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-                // Issue the necessary commands to draw your scene here
-                /*let translation_mat: glm::Mat4 = glm::translation(&glm::vec3(-position[0], -position[1], -position[2]));
-                let rot_1: glm::Mat4 = glm::rotation(-angles[0], &glm::vec3(1.0, 0.0, 0.0));
-                let rot_2: glm::Mat4 = glm::rotation(-angles[1], &glm::vec3(0.0, 1.0, 0.0));
-                (node: &mut scene_graph::SceneNode, transformation_so_far: &glm::Mat4*/
-                
+                let offset = 0.2;
+
+                for i in 0..=4{
+                    // Issue the necessary commands to draw your scene here
+                    //Make rotors rotate
+                    (*(*(*root.children[0]).children[i]).children[1]).rotation.y = 1.6*elapsed;
+                    (*(*(*root.children[0]).children[i]).children[2]).rotation.x = 1.6*elapsed;
+                    //main_rotor_node.rotation.y = 1.6*elapsed;
+                    //tail_rotor_node.rotation.x = 1.6*elapsed;
+
+                    //Get animation for helicopter:
+                    let heading: toolbox::Heading = toolbox::simple_heading_animation(elapsed + i*offset);
+
+                    body_node.position.x = heading.x;
+                    body_node.position.z = heading.z;
+
+                    body_node.rotation.y = heading.yaw;
+                    body_node.rotation.x = heading.pitch;
+                    body_node.rotation.z = heading.roll;
+                }
+
+                //Update transformations
                 update_node_transformations(&mut root as &mut scene_graph::SceneNode, &glm::identity());
 
-                let perspective_mat: glm::Mat4 = glm::perspective(0.75, 1.0, 1.0, 1000.0);
-
+                let perspective_mat: glm::Mat4 = glm::perspective(1.333, 1.0, 1.0, 1000.0);
 
                 draw_scene(&root, &perspective_mat);
-
-                /*gl::UniformMatrix4fv(2, 1, 0, transformation.as_ptr());
-
-                let zero_address = ptr::null();
-                gl::BindVertexArray(terrain_vao);
-                
-                gl::DrawElements(gl::TRIANGLES, surface.index_count, gl::UNSIGNED_INT, zero_address);
-
-                gl::BindVertexArray(body_vao);
-                
-                gl::DrawElements(gl::TRIANGLES, helicopter.body.index_count, gl::UNSIGNED_INT, zero_address);
-
-                gl::BindVertexArray(door_vao);
-                
-                gl::DrawElements(gl::TRIANGLES, helicopter.door.index_count, gl::UNSIGNED_INT, zero_address);
-
-                gl::BindVertexArray(main_rotor_vao);
-                
-                gl::DrawElements(gl::TRIANGLES, helicopter.main_rotor.index_count, gl::UNSIGNED_INT, zero_address);
-
-                gl::BindVertexArray(tail_rotor_vao);
-                
-                gl::DrawElements(gl::TRIANGLES, helicopter.tail_rotor.index_count, gl::UNSIGNED_INT, zero_address);*/
-
             }
 
             context.swap_buffers().unwrap();

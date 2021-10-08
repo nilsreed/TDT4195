@@ -7,5 +7,6 @@ out vec4 color;
 void main()
 {
     vec3 lightDirection = normalize(vec3(0.8, -0.5, 0.6));
-    color = colour_out*max(0, dot(normal_out, -lightDirection));
+    vec3 colour_rgb = vec3(colour_out[0], colour_out[1], colour_out[2])*dot(normal_out, -lightDirection);
+    color = vec4(colour_rgb[0], colour_rgb[1], colour_rgb[2], colour_out[3]);
 }
