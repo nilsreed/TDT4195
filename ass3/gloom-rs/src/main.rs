@@ -236,28 +236,6 @@ fn main() {
         }
         
 
-        /* Create scene nodes and combine them into a scene graph */
-        /*let mut root = SceneNode::new();
-        let mut terrain_node = SceneNode::from_vao(terrain_vao, surface.index_count);
-        let mut body_node = SceneNode::from_vao(body_vao, helicopter.body.index_count);
-        let mut door_node = SceneNode::from_vao(door_vao, helicopter.door.index_count);
-        let mut main_rotor_node = SceneNode::from_vao(main_rotor_vao, helicopter.main_rotor.index_count);
-        let mut tail_rotor_node = SceneNode::from_vao(tail_rotor_vao, helicopter.tail_rotor.index_count);
-
-        tail_rotor_node.reference_point = glm::vec3(0.35, 2.3, 10.4);
-        main_rotor_node.reference_point = glm::vec3(0.0, 0.0, 0.0);
-        /* TEST */
-        //body_node.position = glm::vec3(0.0, 0.0, -20.0);
-        //terrain_node.position = glm::vec3(0.0, -3.0, 0.0);
-        //body_node.rotation.y = -3.14*3.0/4.0;
-
-        root.add_child(&terrain_node);
-        terrain_node.add_child(&body_node);
-        body_node.add_child(&door_node);
-        body_node.add_child(&main_rotor_node);
-        body_node.add_child(&tail_rotor_node);*/
-
-
         // Basic usage of shader helper:
         // The example code below returns a shader object, which contains the field `.program_id`.
         // The snippet is not enough to do the assignment, and will need to be modified (outside of
@@ -297,39 +275,30 @@ fn main() {
                         },
                         VirtualKeyCode::A => {
                             unsafe {(*root.children[0]).position[0] += delta_time*40.0;}
-                            //position[0] -= delta_time*40.0;
                         },
                         VirtualKeyCode::LShift => {
                             unsafe {(*root.children[0]).position[1] += delta_time*40.0;}
-                            //position[1] -= delta_time*40.0;
                         },
                         VirtualKeyCode::D => {
                             unsafe {(*root.children[0]).position[0] -= delta_time*40.0;}
-                            //position[0] += delta_time*40.0;
                         },
                         VirtualKeyCode::S => {
                             unsafe {(*root.children[0]).position[2] -= delta_time*40.0;}
-                            //position[2] += delta_time*40.0;
                         },
                         VirtualKeyCode::W => {
                             unsafe {(*root.children[0]).position[2] += delta_time*40.0;}
-                            //position[2] -= delta_time*40.0;
                         },
                         VirtualKeyCode::Up => {
                             unsafe {(*root.children[0]).rotation[0] -= delta_time*0.5;}
-                            //angles[0] += delta_time*0.5;
                         },
                         VirtualKeyCode::Down => {
                             unsafe {(*root.children[0]).rotation[0] += delta_time*0.5;}
-                            //angles[0] -= delta_time*0.5;
                         },
                         VirtualKeyCode::Left => {
                             unsafe {(*root.children[0]).rotation[1] -= delta_time*0.5;}
-                            //angles[1] += delta_time*0.5;
                         },
                         VirtualKeyCode::Right => {
                             unsafe {(*root.children[0]).rotation[1] += delta_time*0.5;}
-                            //angles[1] -= delta_time*0.5;
                         },
                         
 
@@ -348,9 +317,6 @@ fn main() {
 
             unsafe {
                 gl::ClearColor(0.76862745, 0.71372549, 0.94901961, 1.0); // moon raker, full opacity
-                //gl::ClearColor(0.0, 0.0, 0.0, 1.0); // moon raker, full opacity
-                //Temp:
-                //gl::ClearColor(1.0,1.0,1.0,1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 let offset = 0.8;
@@ -360,23 +326,16 @@ fn main() {
                     //Make rotors rotate
                     (*(*(*root.children[0]).children[i]).children[1]).rotation.y = 1.6*elapsed;
                     (*(*(*root.children[0]).children[i]).children[2]).rotation.x = 1.6*elapsed;
-                    //main_rotor_node.rotation.y = 1.6*elapsed;
-                    //tail_rotor_node.rotation.x = 1.6*elapsed;
 
                     //Get animation for helicopter:
                     let heading: toolbox::Heading = toolbox::simple_heading_animation(elapsed + (i as f32)*offset);
 
                     (*(*root.children[0]).children[i]).position.x = heading.x;
                     (*(*root.children[0]).children[i]).position.z = heading.z;
-                    //body_node.position.x = heading.x;
-                    //body_node.position.z = heading.z;
 
                     (*(*root.children[0]).children[i]).rotation.y = heading.yaw;
                     (*(*root.children[0]).children[i]).rotation.x = heading.pitch;
                     (*(*root.children[0]).children[i]).rotation.z = heading.roll;
-                    //body_node.rotation.y = heading.yaw;
-                    //body_node.rotation.x = heading.pitch;
-                    //body_node.rotation.z = heading.roll;
                 }
 
                 //Update transformations
