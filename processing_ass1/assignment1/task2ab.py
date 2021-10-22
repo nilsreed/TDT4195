@@ -18,7 +18,11 @@ def greyscale(im):
     Returns:
         im ([type]): [np.array of shape [H, W]]
     """
+    for x in range(im.shape[0]):
+        for y in range(im.shape[1]):
+            im[x, y, 0] = 0.212*im[x, y, 0] + 0.7152*im[x, y, 1] + 0.0722*im[x, y, 2]
 
+    im = im[:, :, 0]
     return im
 
 
@@ -36,5 +40,22 @@ def inverse(im):
     Returns:
         im ([type]): [np.array of shape [H, W]]
     """
-    # YOUR CODE HERE
+    for x in range(im.shape[0]):
+        for y in range(im.shape[1]):
+            im[x, y] = 1 - im[x, y]
+
     return im
+
+im_greyscale_inverse = inverse(im_greyscale)
+save_im(output_dir.joinpath("lake_greyscale_inverse.jpg"), im_greyscale_inverse, cmap="gray")
+plt.imshow(im_greyscale_inverse, cmap="gray")
+
+
+def convolve_RGB(im, kernel):
+    # Make a return image
+    # Flip kernel
+    # Zero-pad original image
+    # Do convolution on each colour channel
+    
+
+    return convolved
