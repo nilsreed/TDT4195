@@ -49,13 +49,3 @@ def inverse(im):
 im_greyscale_inverse = inverse(im_greyscale)
 save_im(output_dir.joinpath("lake_greyscale_inverse.jpg"), im_greyscale_inverse, cmap="gray")
 plt.imshow(im_greyscale_inverse, cmap="gray")
-
-
-def convolve_RGB(im, kernel):
-    # Make a return image
-    # Flip kernel
-    # Zero-pad original image
-    # Do convolution on each colour channel
-    
-
-    return convolved
