@@ -24,8 +24,7 @@ def convolve_im(im, kernel,
     assert len(im.shape) == 3
 
     # Flip kernel, so that we do correlation instead of convolution
-    corr_kernel = np.fliplr(kernel.copy())
-    corr_kernel = np.flipud(corr_kernel)
+    corr_kernel = np.fliplr(np.flipud(kernel.copy()))
 
     # Layers of zero padding as a function of K.
     # Assuming K is odd, (K-1)/2 layers of zeros is needed
@@ -37,14 +36,16 @@ def convolve_im(im, kernel,
     padded = np.zeros((im.shape[0] + 2*padding, im.shape[1] + 2*padding, 3))
     padded[padding:im.shape[0]+padding, padding:im.shape[1]+padding, :] = im
 
+    # Zero out whole image
+    im = np.zeros((im.shape[0], im.shape[1], im.shape[2]))
+
     # Do convolution on each colour channel
     for channel in range(3):
         for x in range(im.shape[0]):
             for y in range(im.shape[1]):
-                im[x, y, channel] =  0
                 for u in range(-padding, padding + 1):
                     for v in range(-padding, padding + 1):
-                        im[x, y, channel] += padded[x + padding + u, y + padding + v, channel]*corr_kernel[u, v]
+                        im[x, y, channel] += padded[x + padding + u, y + padding + v, channel]*corr_kernel[u + padding, v + padding]
 
     return im
 
