@@ -16,6 +16,7 @@ batch_size = 64
 
 image_transform = torchvision.transforms.Compose([
     torchvision.transforms.ToTensor(),
+    torchvision.transforms.Normalize(0.5, 0.5)
 ])
 
 dataloader_train, dataloader_test = dataloaders.load_dataset(
@@ -38,6 +39,17 @@ def create_model():
     model = utils.to_cuda(model)
     return model
 
+def create_model_for_task_4_c():
+    model = nn.Sequential(
+        nn.Flatten(),  # Flattens the image from shape (batch_size, C, Height, width) to (batch_size, C*height*width)
+        nn.Linear(28*28*1, 64),
+        nn.ReLU(),
+        nn.Linear(64, 10)
+        # No need to include softmax, as this is already combined in the loss function
+    )
+    # Transfer model to GPU memory if a GPU is available
+    model = utils.to_cuda(model)
+    return model
 
 model = create_model()
 
@@ -80,11 +92,11 @@ train_loss_dict, test_loss_dict = trainer.train(num_epochs)
 utils.plot_loss(train_loss_dict, label="Train Loss")
 utils.plot_loss(test_loss_dict, label="Test Loss")
 # Limit the y-axis of the plot (The range should not be increased!)
-plt.ylim([0, 1])
+plt.ylim([0, 6])
 plt.legend()
 plt.xlabel("Global Training Step")
 plt.ylabel("Cross Entropy Loss")
-plt.savefig("image_solutions/task_4a.png")
+plt.savefig("image_solutions/task_4c2_.png")
 
 plt.show()
 
@@ -92,6 +104,24 @@ torch.save(model.state_dict(), "saved_model.torch")
 final_loss, final_acc = utils.compute_loss_and_accuracy(
     dataloader_test, model, loss_function)
 print(f"Final Test loss: {final_loss}. Final Test accuracy: {final_acc}")
+
+res = 0
+for val in train_loss_dict.values():
+    res += val
+
+res = res/len(train_loss_dict)
+
+print("Average cross entropy loss from training: " + str(res))
+# 4b
+# weight = list(model.children())[1].weight.cpu().data
+# print(type(weight))
+# print(weight.shape)
+
+# for i in range(10):
+#     im = torch.reshape(weight[i, :], (28, 28))
+#     plt.imshow(im)
+#     plt.savefig("image_solutions/" + str(i) + "_weight.png")
+#     plt.show()
 
 
 # You can delete the remaining code of this notebook, as this is just to illustrate one method to solve the assignment tasks.
@@ -104,13 +134,18 @@ print(f"Final Test loss: {final_loss}. Final Test accuracy: {final_acc}")
 torch.random.manual_seed(0)
 np.random.seed(0)
 
+# Redefine image transform to include a normalization
+# image_transform = torchvision.transforms.Compose([
+#     torchvision.transforms.ToTensor(),
+#     torchvision.transforms.Normalize(0.5, 0.5)
+# ])
 
 dataloader_train, dataloader_test = dataloaders.load_dataset(
     batch_size, image_transform)
-model = create_model()
+model = create_model_for_task_4_c()
 
 learning_rate = .0192
-num_epochs = 6
+# num_epochs = 6
 
 # Redefine optimizer, as we have a new model.
 optimizer = torch.optim.SGD(model.parameters(),
@@ -123,17 +158,17 @@ trainer = Trainer(
     loss_function=loss_function,
     optimizer=optimizer
 )
-train_loss_dict_6epochs, test_loss_dict_6epochs = trainer.train(num_epochs)
+train_loss_dict_normalized, test_loss_dict_normalized = trainer.train(num_epochs)
 num_epochs = 5
 
 
 # We can now plot the two models against eachother
 
 # Plot loss
-utils.plot_loss(train_loss_dict_6epochs,
-                label="Train Loss - Model trained with 6 epochs")
-utils.plot_loss(test_loss_dict_6epochs,
-                label="Test Loss - Model trained with 6 epochs")
+utils.plot_loss(train_loss_dict_normalized,
+                label="Train Loss - Model with hidden layer")
+utils.plot_loss(test_loss_dict_normalized,
+                label="Test Loss - Model with hidden layer")
 utils.plot_loss(train_loss_dict, label="Train Loss - Original model")
 utils.plot_loss(test_loss_dict, label="Test Loss - Original model")
 # Limit the y-axis of the plot (The range should not be increased!)
@@ -141,7 +176,7 @@ plt.ylim([0, 1])
 plt.legend()
 plt.xlabel("Global Training Step")
 plt.ylabel("Cross Entropy Loss")
-plt.savefig("image_solutions/task_4a.png")
+plt.savefig("image_solutions/task_4d.png")
 
 plt.show()
 
