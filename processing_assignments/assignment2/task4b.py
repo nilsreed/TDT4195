@@ -23,8 +23,11 @@ def convolve_im(im: np.array,
         im: np.array of shape [H, W]
     """
     # START YOUR CODE HERE ### (You can change anything inside this block)
-
-    conv_result = im
+    kernel_fft = np.fft.fft2(kernel, [2*im.shape[0], 2*im.shape[1]])
+    im_fft = np.fft.fft2(im, [2*im.shape[0], 2*im.shape[1]])
+    filtered_fft = np.multiply(kernel_fft,im_fft)
+    conv_result = np.fft.ifft2(filtered_fft, [2*im.shape[0], 2*im.shape[1]])
+    conv_result = conv_result[0:im.shape[0], 0:im.shape[1]]
 
     if verbose:
         # Use plt.subplot to place two or more images beside eachother
@@ -34,13 +37,16 @@ def convolve_im(im: np.array,
         plt.imshow(im, cmap="gray")
         plt.subplot(1, 5, 2)
         # Visualize FFT
+        plt.imshow(np.log(np.abs(np.fft.fftshift(im_fft)) + 1), cmap='gray')
         plt.subplot(1, 5, 3)
         # Visualize FFT kernel
+        plt.imshow(np.log(np.abs(np.fft.fftshift(kernel_fft)) + 1), cmap='gray')
         plt.subplot(1, 5, 4)
         # Visualize filtered FFT image
+        plt.imshow(np.log(np.abs(np.fft.fftshift(filtered_fft)) + 1), cmap='gray')
         plt.subplot(1, 5, 5)
         # Visualize filtered spatial image
-        plt.imshow(conv_result, cmap="gray")
+        plt.imshow(np.real(conv_result), cmap="gray")
 
     ### END YOUR CODE HERE ###
     return conv_result

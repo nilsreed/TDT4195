@@ -73,7 +73,6 @@ def torch_image_to_numpy(image: torch.Tensor):
 indices = [5, 8, 19, 22, 34]# [0, 1, 2, 3, 4, 5]
 num_filters = len(indices)
 # %%
-
 plt.figure(figsize=(20, 4))
 n = 1
 for i in indices:
@@ -87,13 +86,3 @@ for i in indices:
 plt.savefig("image_processed/2c.png")
 plt.show()
 ### END YOUR CODE HERE ###
-# 4b
-# weight = list(model.children())[1].weight.cpu().data
-# print(type(weight))
-# print(weight.shape)
-
-# for i in range(10):
-#     im = torch.reshape(weight[i, :], (28, 28))
-#     plt.imshow(im)
-#     plt.savefig("image_solutions/" + str(i) + "_weight.png")
-#     plt.show()

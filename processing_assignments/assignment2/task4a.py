@@ -21,7 +21,12 @@ def convolve_im(im: np.array,
         im: np.array of shape [H, W]
     """
     # START YOUR CODE HERE ### (You can change anything inside this block)
-    conv_result = im
+    assert len(im.shape) == 2, "Image not greyscale"
+    assert im.shape == fft_kernel.shape, "Kernel and image not the same size"
+    im_fft = np.fft.fft2(im)
+    filtered_fft = np.multiply(im_fft, fft_kernel)
+    conv_result = np.fft.ifft2(filtered_fft)
+
     if verbose:
         # Use plt.subplot to place two or more images beside eachother
         plt.figure(figsize=(20, 4))
@@ -30,13 +35,16 @@ def convolve_im(im: np.array,
         plt.imshow(im, cmap="gray")
         plt.subplot(1, 5, 2)
         # Visualize FFT
+        plt.imshow(np.log(np.abs(np.fft.fftshift(im_fft)) + 1), cmap='gray')
         plt.subplot(1, 5, 3)
         # Visualize FFT kernel
+        plt.imshow(np.log(np.abs(np.fft.fftshift(fft_kernel)) + 1), cmap='gray')
         plt.subplot(1, 5, 4)
         # Visualize filtered FFT image
+        plt.imshow(np.log(np.abs(np.fft.fftshift(filtered_fft)) + 1), cmap='gray')
         plt.subplot(1, 5, 5)
         # Visualize filtered spatial image
-        plt.imshow(conv_result, cmap="gray")
+        plt.imshow(np.real(conv_result), cmap="gray")
 
     ### END YOUR CODE HERE ###
     return conv_result

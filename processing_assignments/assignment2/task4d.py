@@ -27,7 +27,24 @@ def create_binary_image(im):
     """
 
     # START YOUR CODE HERE ### (You can change anything inside this block)
-    binary_im = np.zeros_like(im, dtype=np.bool)
+    im_fft = np.fft.fft2(im)
+
+    threshed_im = np.zeros_like(im, dtype=np.bool)
+
+    #Cutoff some shit
+    threshold = 250
+    for i in range(threshed_im.shape[0]):
+        for j in range(threshed_im.shape[1]):
+            if abs(im_fft[i,j]) >= threshold:
+                threshed_im[i,j] = True
+    
+    plt.subplot(1,2,1)    
+    plt.imshow(np.log(np.abs(np.fft.fftshift(im_fft)) + 1), cmap='gray')
+    plt.subplot(1,2,2)    
+    plt.imshow(np.log(np.abs(np.fft.fftshift(threshed_im)) + 1), cmap='gray')
+    plt.show()
+
+    binary_im = np.fft.fftshift(threshed_im) #np.zeros_like(im, dtype=np.bool)
     ### END YOUR CODE HERE ###
     return binary_im
 
