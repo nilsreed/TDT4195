@@ -18,7 +18,49 @@ def otsu_thresholding(im: np.ndarray) -> int:
     # START YOUR CODE HERE ### (You can change anything inside this block)
     # You can also define other helper functions
     # Compute normalized histogram
-    threshold = 128
+    
+    # Find the histogram
+    histogram = [0]*255
+    
+    print(im.shape)
+    for y in range(im.shape[0]):
+        for x in range(im.shape[1]):
+            histogram[im[x, y]] += 1
+
+    # Normalize histogram
+    normalized_histogram = [0]*255
+    
+    for i in range(256):
+        normalized_histogram[i] = histogram[i]/(im.shape[0]*im.shape[1])
+        
+    # Find cumulative sums
+    cum_sums = [0]*255
+    cum_sums[0] = normalized_histogram[0]
+    for i in range(1, 256):
+        cum_sums[i] = cum_sums[i-1] + normalized_histogram[i]
+    
+    # Find cumulative mean
+    cum_means = [0]*255
+    # cum_means[0] = 0 #Not necessary
+    for i in range(1, 256):
+        cum_means[i] = cum_means[i-1] + i*normalized_histogram[i]
+    
+    # Find global mean
+    global_mean = cum_means[-1]
+
+    # Find between-class variance
+    sigma_B = [0]*255
+    for i in range(256):
+        sigma_B[i] = ((global_mean*cum_sums[i] - cum_means[i])**2)/(cum_sums[i]*(1 - cum_sums[i]))
+    
+
+    max_sigma = max(sigma_B)
+
+    if sigma_B.count(max_sigma) == 1:
+        threshold = sigma_B.index(max_sigma)
+    else:
+        indices = [i for i, x in enumerate(sigma_B) if x == max_sigma]
+        threshold = round(indices.sum()/len(indices))
     return threshold
     ### END YOUR CODE HERE ###
 
