@@ -20,27 +20,33 @@ def otsu_thresholding(im: np.ndarray) -> int:
     # Compute normalized histogram
     
     # Find the histogram
-    histogram = [0]*255
+    histogram = [0]*256
     
-    print(im.shape)
-    for y in range(im.shape[0]):
-        for x in range(im.shape[1]):
-            histogram[im[x, y]] += 1
+    for i in range(im.shape[0]):
+        for j in range(im.shape[1]):
+            histogram[im[i, j]] += 1
 
     # Normalize histogram
-    normalized_histogram = [0]*255
+    normalized_histogram = [0]*256
     
+    zeros = 0
+
     for i in range(256):
         normalized_histogram[i] = histogram[i]/(im.shape[0]*im.shape[1])
+        if normalized_histogram[i] == 0:
+            zeros+=1
+    print(zeros)
+    print(normalized_histogram)
+    print(sum(normalized_histogram))
         
     # Find cumulative sums
-    cum_sums = [0]*255
+    cum_sums = [0]*256
     cum_sums[0] = normalized_histogram[0]
     for i in range(1, 256):
         cum_sums[i] = cum_sums[i-1] + normalized_histogram[i]
     
     # Find cumulative mean
-    cum_means = [0]*255
+    cum_means = [0]*256
     # cum_means[0] = 0 #Not necessary
     for i in range(1, 256):
         cum_means[i] = cum_means[i-1] + i*normalized_histogram[i]
@@ -49,7 +55,7 @@ def otsu_thresholding(im: np.ndarray) -> int:
     global_mean = cum_means[-1]
 
     # Find between-class variance
-    sigma_B = [0]*255
+    sigma_B = [0]*256
     for i in range(256):
         sigma_B[i] = ((global_mean*cum_sums[i] - cum_means[i])**2)/(cum_sums[i]*(1 - cum_sums[i]))
     
