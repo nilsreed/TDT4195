@@ -20,9 +20,21 @@ def region_growing(im: np.ndarray, seed_points: list, T: int) -> np.ndarray:
     # START YOUR CODE HERE ### (You can change anything inside this block)
     # You can also define other helper functions
     segmented = np.zeros_like(im).astype(bool)
-    im = im.astype(float)
+
     for row, col in seed_points:
-        segmented[row, col] = True
+        base_intensity = int(im[row, col])
+        active_front = [[row,col]]
+
+        while (len(active_front) > 0):
+            p = active_front.pop()
+            for i in range(p[0] - 1, p[0] + 2):
+                for j in range(p[1] - 1, p[1] + 2):
+                    if (i >= 0) and (i < im.shape[0]) and (j >= 0) and (j < im.shape[1]):
+                        if (not segmented[i, j]) and (abs(int(im[i, j]) - base_intensity) < T):
+                            active_front.append([i, j])
+                            segmented[i, j] = True
+
+    # im = im.astype(float)
     return segmented
     ### END YOUR CODE HERE ###
 
@@ -37,7 +49,7 @@ if __name__ == "__main__":
         [233, 436],  # Seed point 3
         [232, 417],  # Seed point 4
     ]
-    intensity_threshold = 50
+    intensity_threshold = 90
     segmented_image = region_growing(im, seed_points, intensity_threshold)
 
     assert im.shape == segmented_image.shape, "Expected image shape ({}) to be same as thresholded image shape ({})".format(

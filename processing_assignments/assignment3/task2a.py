@@ -35,10 +35,7 @@ def otsu_thresholding(im: np.ndarray) -> int:
         normalized_histogram[i] = histogram[i]/(im.shape[0]*im.shape[1])
         if normalized_histogram[i] == 0:
             zeros+=1
-    print(zeros)
-    print(normalized_histogram)
-    print(sum(normalized_histogram))
-        
+
     # Find cumulative sums
     cum_sums = [0]*256
     cum_sums[0] = normalized_histogram[0]
@@ -57,7 +54,8 @@ def otsu_thresholding(im: np.ndarray) -> int:
     # Find between-class variance
     sigma_B = [0]*256
     for i in range(256):
-        sigma_B[i] = ((global_mean*cum_sums[i] - cum_means[i])**2)/(cum_sums[i]*(1 - cum_sums[i]))
+        if not (cum_sums[i] == 0 or cum_sums[i] == 0):
+            sigma_B[i] = ((global_mean*cum_sums[i] - cum_means[i])**2)/(cum_sums[i]*(1 - cum_sums[i]))
     
 
     max_sigma = max(sigma_B)
