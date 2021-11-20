@@ -3,6 +3,21 @@ import skimage
 import skimage.morphology
 import numpy as np
 
+def pixel_bool_subtract(A: bool, B: bool) -> bool:
+    if (not B):
+        return A
+    return False
+
+def image_bool_subtract(im: np.ndarray, sub_im: np.ndarray) -> np.ndarray:
+    assert im.dtype == np.bool
+    assert sub_im.dtype == np.bool
+    assert im.shape == sub_im.shape
+
+    for x in range(im.shape[0]):
+        for y in range(im.shape[1]):
+            im[x, y] = pixel_bool_subtract(im[x, y], sub_im[x, y])
+    
+    return im
 
 def extract_boundary(im: np.ndarray) -> np.ndarray:
     """
@@ -20,7 +35,11 @@ def extract_boundary(im: np.ndarray) -> np.ndarray:
         [1, 1, 1],
         [1, 1, 1]
     ], dtype=bool)
-    boundary = im
+
+    eroded = skimage.morphology.binary_erosion(im, structuring_element)
+
+    boundary = image_bool_subtract(im, eroded)
+    
     return boundary
     ### END YOUR CODE HERE ###
 

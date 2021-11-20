@@ -49,7 +49,7 @@ if __name__ == "__main__":
         [233, 436],  # Seed point 3
         [232, 417],  # Seed point 4
     ]
-    intensity_threshold = 90
+    intensity_threshold = 50
     segmented_image = region_growing(im, seed_points, intensity_threshold)
 
     assert im.shape == segmented_image.shape, "Expected image shape ({}) to be same as thresholded image shape ({})".format(
